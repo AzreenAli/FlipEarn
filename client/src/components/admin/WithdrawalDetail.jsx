@@ -1,8 +1,11 @@
 import toast from 'react-hot-toast';
 import { XIcon, CopyIcon } from 'lucide-react';
+import { useAuth } from '@clerk/clerk-react';
+import api from '../../configs/axios';
 
 const WithdrawalDetail = ({ data, onClose }) => {
     const currency = import.meta.env.VITE_CURRENCY || '$';
+    const {getToken} = useAuth()
 
     const copyToClipboard = ({ name, value }) => {
         navigator.clipboard.writeText(value || '');
@@ -10,14 +13,25 @@ const WithdrawalDetail = ({ data, onClose }) => {
     };
 
     const markAsWithdrawn = async () => {
-        
+        try {
+            toast.loading('Processing...');
+            const token = await getToken();
+            const res = await api.put(`/api/admin/withdrawal-mark/${data.id}`, {}, {headers: {Authorization: `Bearer ${token}`}})
+            toast.dismissAll();
+            toast.success(res.data.message);
+            onClose();
+        } catch (error) {
+            toast.dismissAll();
+            toast.error(error?.response?.data?.message || error.message);
+            console.log(error);
+        }
     };
 
     return (
         <div className='fixed inset-0 bg-black/70 backdrop-blur z-100 flex items-center justify-center sm:p-4'>
             <div className='bg-white sm:rounded-lg shadow-2xl w-full max-w-xl h-screen sm:h-[480px] flex flex-col'>
                 {/* Header */}
-                <div className='bg-gradient-to-r from-indigo-600 to-indigo-400 text-white p-4 sm:rounded-t-lg flex items-center justify-between'>
+                <div className='bg-linear-to-r from-indigo-600 to-indigo-400 text-white p-4 sm:rounded-t-lg flex items-center justify-between'>
                     <div className='flex-1 min-w-0'>
                         <h3 className='font-semibold text-lg truncate'>Withdrawal Request</h3>
                         <p className='text-sm text-indigo-100 truncate'>

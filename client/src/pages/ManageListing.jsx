@@ -1,13 +1,20 @@
+import { useAuth } from '@clerk/clerk-react'
 import { Loader2Icon, Upload } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate, useParams } from 'react-router-dom'
+import api from '../configs/axios'
+import { getAllUserListing } from '../app/features/listingSlice'
+import { getAllPublicListing } from '../app/features/listingSlice'
 
 const ManageListing = () => {
   const {id} = useParams()
   const navigate = useNavigate()
   const {userListings} = useSelector((state)=>state.listing)
+
+  const {getToken} = useAuth()
+  const dispatch = useDispatch()
 
   const [loadingListing, setLoadingListing] =useState(false)
   const [isEditing, setIsEditing] = useState(false)
@@ -73,6 +80,48 @@ const ManageListing = () => {
 
     const handleSubmit = async (e) => {
       e.preventDefault();
+      toast.loading('Saving...')
+      const dataCopy = structuredClone(formData)
+      try {
+        if(isEditing){
+          dataCopy.images = formData.images.filter((image)=>typeof image === "string")
+
+          const formDataInstance = new FormData()
+          formDataInstance.append('accountDetails', JSON.stringify(dataCopy))
+
+          formData.images.filter((image) => typeof image !== 'string').forEach
+          ((image)=> {formDataInstance.append('images', image)})
+
+          const token = await getToken()
+
+          const { data } = await api.put('/api/listing', formDataInstance, 
+            {headers: { Authorization: `Bearer ${token}`}})
+            toast.dismissAll()
+            toast.success(data.message)
+            dispatch(getAllUserListing({getToken}))
+            dispatch(getAllPublicListing())
+            navigate('/my-listings')
+        }else{
+          delete dataCopy.images;
+
+          const formDataInstance = new FormData();
+          formDataInstance.append('accountDetails', JSON.stringify(dataCopy))
+          formData.images.forEach((image)=>{
+            formDataInstance.append('images', image)
+          })
+          const token = await getToken()
+          const { data } = await api.post('/api/listing', formDataInstance, 
+          {headers: { Authorization: `Bearer ${token}`}})
+          toast.dismissAll();
+          toast.success(data.message);
+          dispatch(getAllUserListing({getToken}))
+          dispatch(getAllPublicListing())
+          navigate('/my-listings')
+        }
+      } catch (error) {
+        toast.dismissAll();
+        toast.error(error?.response?.data?.message || error.message);
+      }
     };
 
     if(loadingListing){
@@ -218,10 +267,10 @@ const InputField = ({label, value, onChange, placeholder, type = 'text', require
 const SelectField = ({ label, options, value, onChange, required = false })=>(
   <div>
     <label className='block text-sm font-medium text-gray-700 mb-2'>{label}</label>
-    <select value={value} onChange={(e) => onchange(e.target.value)}
+    <select value={value} onChange={(e) => onChange(e.target.value)}
       className='w-full px-3 py-1.5 text-gray-600 border rounded-md focus:outline-none
       focus:ring-2 focus:ring-indigo-500 border-gray-300' required={required}>
-        <options value=''>Select...</options>
+        <option value=''>Select...</option>
         {options.map((opt)=>(
           <option key={opt} value={opt}>{opt}</option>
         ))}
