@@ -116,7 +116,7 @@ const sendPurchaseEmail = inngest.createFunction(
             <p>Here are your credentials for the listing you purchased.</p>
             <h3>New Credentials</h3>
             <div>
-            ${credential.updatedCredential.map((cred)=>`<p>${cred.name} : ${cred.value}</p>.join("")`)}
+            ${credential.updatedCredential.map((cred)=>`<p>${cred.name} : ${cred.value}</p>`).join("")}
             </div>
             <p>If you have any questions, please contact us at <a href="mailto:support@example.com">support@example.com</a></p>
             `
@@ -140,18 +140,20 @@ const sendNewCredentials = inngest.createFunction(
                 to: listing.owner.email,
                 subject: "New credentials for you deleted listing",
                 html: `
-                <h2>Your new credentials for your deleted listing:</h2>
+                <h2>Your new credentials for your deleted listing :</h2>
                 title: ${listing.title}
                 <br/>
                 username : ${listing.username}
                 <br/>
+                platform : ${listing.platform}
+                <br/>
                 <h3>New Credentials</h3>
                 <div>
-                ${newCredential.updatedCredential.map((cred)=>`<p>${cred.name} : ${cred.value}</p>.join("")`)}
+                ${newCredential.updatedCredential.map((cred)=>`<p>${cred.name} : ${cred.value}</p>`).join("")}
                 </div>
                 <h3>Old Credentials</h3>
                 <div>
-                ${newCredential.originalCredential.map((cred)=>`<p>${cred.name} : ${cred.value}</p>.join("")`)}
+                ${newCredential.originalCredential.map((cred)=>`<p>${cred.name} : ${cred.value}</p>`).join("")}
                 </div>
 
                 <p>If you have any questions, please contact us at <a href="mailto:support@example.com">support@example.com</a></p>
